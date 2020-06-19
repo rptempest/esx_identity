@@ -8,7 +8,7 @@ if Config.UseDeferrals then
 		deferrals.defer()
 		local playerId, identifier = source
 		Citizen.Wait(100)
-	
+
 		if Config.UseSteamID then
 			for k,v in ipairs(GetPlayerIdentifiers(playerId)) do
 				if string.match(v, 'steam:') then
@@ -19,12 +19,12 @@ if Config.UseDeferrals then
 		else
 			for k,v in ipairs(GetPlayerIdentifiers(playerId)) do
 				if string.match(v, 'license:') then
-					identifier = string.sub(v, 9)
+					identifier = v
 					break
 				end
 			end
 		end
-	
+
 		if identifier then
 			MySQL.Async.fetchAll('SELECT firstname, lastname, dateofbirth, sex, height FROM users WHERE identifier = @identifier', {
 				['@identifier'] = identifier
@@ -38,7 +38,7 @@ if Config.UseDeferrals then
 							sex = result[1].sex,
 							height = result[1].height
 						}
-		
+
 						deferrals.done()
 					else
 						deferrals.presentCard([==[{"type": "AdaptiveCard","body":[{"type":"Container","items":[{"type":"ColumnSet","columns":[{"type":"Column","items":[{"type":"Input.Text","placeholder":"First Name","id":"firstname","maxLength":15},{"type":"Input.Text","placeholder":"Date of Birth (MM/DD/YYYY)","id":"dateofbirth","maxLength":10}],"width":"stretch"},{"type":"Column","width":"stretch","items":[{"type":"Input.Text","placeholder":"Last Name","id":"lastname","maxLength":15},{"type":"Input.Text","placeholder":"Height (48-96 inches)","id":"height","maxLength":2}]}]},{"type":"Input.ChoiceSet","placeholder":"Sex","choices":[{"title":"Male","value":"m"},{"title":"Female","value":"f"}],"style":"expanded","id":"sex"}]},{"type": "ActionSet","actions": [{"type":"Action.Submit","title":"Submit"}]}],"$schema": "http://adaptivecards.io/schemas/adaptive-card.json","version":"1.0"}]==], function(data, rawData)
@@ -54,7 +54,7 @@ if Config.UseDeferrals then
 										height = tonumber(data.height),
 										saveToDatabase = true
 									}
-		
+
 									deferrals.done()
 								else
 									deferrals.done(_U('invalid_format'))
@@ -76,7 +76,7 @@ if Config.UseDeferrals then
 									height = tonumber(data.height),
 									saveToDatabase = true
 								}
-	
+
 								deferrals.done()
 							else
 								deferrals.done(_U('invalid_format'))
@@ -89,19 +89,19 @@ if Config.UseDeferrals then
 			deferrals.done(_U('no_identifier'))
 		end
 	end)
-	
+
 	RegisterNetEvent('esx:playerLoaded')
 	AddEventHandler('esx:playerLoaded', function(playerId, xPlayer)
 		if playerIdentity[xPlayer.identifier] then
 			local currentIdentity = playerIdentity[xPlayer.identifier]
-	
+
 			xPlayer.setName(('%s %s'):format(currentIdentity.firstName, currentIdentity.lastName))
 			xPlayer.set('firstName', currentIdentity.firstName)
 			xPlayer.set('lastName', currentIdentity.lastName)
 			xPlayer.set('dateofbirth', currentIdentity.dateOfBirth)
 			xPlayer.set('sex', currentIdentity.sex)
 			xPlayer.set('height', currentIdentity.height)
-	
+
 			if currentIdentity.saveToDatabase then
 				saveIdentityToDatabase(xPlayer.identifier, currentIdentity)
 			end
@@ -109,7 +109,7 @@ if Config.UseDeferrals then
 			Citizen.Wait(1000)
 			alreadyRegistered[xPlayer.identifier] = true
 			TriggerClientEvent('esx_identity:alreadyRegistered', xPlayer.source)
-	
+
 			playerIdentity[xPlayer.identifier] = nil
 		else
 			xPlayer.kick(_('missing_identity'))
@@ -131,7 +131,7 @@ elseif not Config.UseDeferrals then
 		else
 			for k,v in ipairs(GetPlayerIdentifiers(playerId)) do
 				if string.match(v, 'license:') then
-					identifier = string.sub(v, 9)
+					identifier = v
 					break
 				end
 			end
@@ -183,7 +183,7 @@ elseif not Config.UseDeferrals then
 			for i=1, #xPlayers, 1 do
 				local xPlayer = ESX.GetPlayerFromId(xPlayers[i])
 
-				if xPlayer then	
+				if xPlayer then
 					checkIdentity(xPlayer)
 				end
 			end
@@ -217,7 +217,7 @@ elseif not Config.UseDeferrals then
 
 	ESX.RegisterServerCallback('esx_identity:registerIdentity', function(source, cb, data)
 		local xPlayer = ESX.GetPlayerFromId(source)
-		
+
 		if xPlayer then
 			if not alreadyRegistered[xPlayer.identifier] then
 				if checkNameFormat(data.firstname) and checkNameFormat(data.lastname) and checkSexFormat(data.sex) and checkDOBFormat(data.dateofbirth) and checkHeightFormat(data.height) then
@@ -240,7 +240,7 @@ elseif not Config.UseDeferrals then
 
 					saveIdentityToDatabase(xPlayer.identifier, currentIdentity)
 					alreadyRegistered[xPlayer.identifier] = true
-			
+
 					playerIdentity[xPlayer.identifier] = nil
 					cb(true)
 				else
